@@ -1,0 +1,22 @@
+# Python 3.11 is required (3.10 and 3.12 should also work; 3.13+ will NOT,
+# because mediapipe 0.10.14 has no packages for it).
+#
+# Install with:   pip install -r requirements.txt
+#
+# Versions are pinned so that everyone gets a combination known to be
+# compatible. mediapipe 0.10.14 is used because it still includes the
+# simple "solutions" hand-tracking API used in vision/landmarks.py, and it
+# needs NumPy 1.x. mediapipe installs OpenCV (opencv-contrib-python) itself;
+# do not also install opencv-python, because the two packages conflict.
+
+mediapipe==0.10.14
+opencv-contrib-python==4.10.0.84
+numpy==1.26.4
+torch==2.5.1
+pandas==2.2.3
+pyarrow==17.0.0
+scikit-learn==1.5.2
+matplotlib==3.9.2
+streamlit==1.39.0
+PyYAML==6.0.2
+pytest==8.3.3

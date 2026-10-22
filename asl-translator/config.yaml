@@ -1,0 +1,125 @@
+# =====================================================================
+# config.yaml
+#
+# Every setting that you might reasonably want to change lives here, so
+# you can experiment without editing Python code. Paths are relative to
+# the asl-translator/ folder.
+#
+# After changing anything in the "features", "vocabulary" or "model"
+# sections you must RETRAIN the model (python -m training.train),
+# because the saved model was built for the old settings.
+# =====================================================================
+
+paths:
+  # Every recorded or imported example (one .npy file per sample) plus a
+  # CSV index describing them. See data/README.md for the format.
+  samples_dir: data/samples
+  # Where the downloaded Kaggle "asl-signs" competition files go.
+  islr_dataset_dir: data/raw/asl-signs
+  # Where training saves the model weights, label mapping and split file.
+  checkpoint_dir: models/checkpoints
+  # Where evaluation graphs and metric reports are written.
+  reports_dir: reports
+
+camera:
+  # 0 is usually the built-in webcam. Try 1, 2, ... for external cameras.
+  index: 0
+  width: 640
+  height: 480
+  # Flip the image horizontally so it behaves like a mirror. MediaPipe's
+  # left/right hand labels assume a mirrored ("selfie") image.
+  mirror: true
+
+hand_tracking:
+  # How many hands MediaPipe looks for. Many ASL signs use two hands.
+  max_num_hands: 2
+  # 0 = faster but less accurate, 1 = slower but more accurate.
+  model_complexity: 1
+  # Minimum MediaPipe confidence (0-1) needed to report a newly detected hand.
+  # Raising it reduces false detections but may miss real hands.
+  min_detection_confidence: 0.5
+  # Minimum confidence needed to keep tracking a hand between frames.
+  min_tracking_confidence: 0.5
+
+features:
+  # Every sign (whatever its real length) is stretched or squeezed to this
+  # many time steps before entering the model, because the network expects
+  # inputs of the same size. Larger = more detail about motion, slower model.
+  sequence_length: 32
+  # Samples with fewer frames than this containing a visible hand are
+  # rejected, because there is not enough information to classify them.
+  min_frames_with_hands: 8
+
+vocabulary:
+  # The signs the model learns. These must match the labels in your data.
+  # The defaults are glosses from the Kaggle asl-signs dataset (which
+  # writes multi-word glosses without spaces, e.g. "thankyou").
+  signs:
+    - hello
+    - bye
+    - thankyou
+    - yes
+    - no
+    - mom
+    - water
+    - drink
+    - food
+    - hungry
+    - sleep
+    - where
+  # Optional prettier text to show for a label in the output.
+  display_names:
+    thankyou: thank you
+
+model:
+  # Number of internal values ("neurons") the GRU uses to remember what
+  # it has seen. Bigger can learn more but overfits small datasets easily.
+  hidden_size: 128
+  # Stacked GRU layers. 2 is a common starting point.
+  num_layers: 2
+  # Fraction of values randomly zeroed during training to reduce overfitting.
+  dropout: 0.3
+  # true = the GRU reads the sequence forwards AND backwards.
+  bidirectional: true
+
+training:
+  # Maximum passes through the training data. Early stopping usually ends
+  # training sooner.
+  epochs: 60
+  # How many samples the model looks at before each weight update.
+  batch_size: 64
+  # Size of each weight update step. Too high = unstable, too low = slow.
+  learning_rate: 0.001
+  # Gently pushes weights toward zero, which helps reduce overfitting.
+  weight_decay: 0.0001
+  # Stop if validation loss has not improved for this many epochs.
+  early_stopping_patience: 8
+  # Fractions of data held out for validation and testing.
+  validation_fraction: 0.15
+  test_fraction: 0.15
+  # Fixed seed so splits and training are repeatable.
+  random_seed: 42
+  # Randomly rotate / stretch / mirror training samples (never val/test).
+  augment: true
+  # Weight rare classes more heavily in the loss (helps unbalanced data).
+  use_class_weights: true
+  # Classes with fewer samples than this cause training to stop with an error.
+  min_samples_per_class: 10
+
+recognition:
+  # How many recent webcam frames form one model input (~1.5 s at 30 fps).
+  window_frames: 45
+  # Run the model every N frames instead of every frame to save CPU.
+  inference_every_n_frames: 3
+  # Smoothed confidence needed before a sign can be accepted.
+  # Higher = fewer wrong words but more missed signs.
+  confidence_threshold: 0.70
+  # How many recent model outputs are averaged together.
+  smoothing_window: 5
+  # How many inference steps in a row must agree before accepting a sign.
+  stability_required: 3
+  # How many uncertain / no-hand / different-sign steps must happen before
+  # the SAME sign can be accepted again (stops one held sign repeating).
+  release_steps: 4
+  # Minimum seconds between any two accepted signs.
+  cooldown_seconds: 1.0

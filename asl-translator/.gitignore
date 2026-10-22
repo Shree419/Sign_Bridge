@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Data and generated files (large and/or personal - do not commit)
+data/raw/*
+!data/raw/.gitkeep
+data/samples/
+models/checkpoints/*
+!models/checkpoints/.gitkeep
+reports/*
+!reports/.gitkeep
