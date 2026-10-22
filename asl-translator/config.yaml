@@ -54,12 +54,14 @@ vocabulary:
   # The signs the model learns. These must match the labels in your data.
   # The defaults are glosses from the Kaggle asl-signs dataset (which
   # writes multi-word glosses without spaces, e.g. "thankyou").
+  # Put quotes around words like "yes", "no", "on", "off", "true" and
+  # "false": without quotes YAML reads them as true/false, not as text.
   signs:
     - hello
     - bye
     - thankyou
-    - yes
-    - no
+    - "yes"
+    - "no"
     - mom
     - water
     - drink

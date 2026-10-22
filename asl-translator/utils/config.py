@@ -46,7 +46,26 @@ def load_config(config_path: Optional[Union[str, Path]] = None) -> Dict[str, Any
     if not path.exists():
         raise FileNotFoundError(f"Configuration file not found: {path}")
     with open(path, "r", encoding="utf-8") as config_file:
-        return yaml.safe_load(config_file)
+        config = yaml.safe_load(config_file)
+    _check_sign_names(config, path)
+    return config
+
+
+def _check_sign_names(config: Dict[str, Any], path: Path) -> None:
+    """
+    Make sure every sign name in the vocabulary is text.
+
+    Why: YAML turns unquoted words such as yes, no, on and off into
+    true/false values, so "- yes" would silently become the boolean True
+    and never match the "yes" label in the dataset.
+    """
+    signs = (config.get("vocabulary") or {}).get("signs") or []
+    not_text = [sign for sign in signs if not isinstance(sign, str)]
+    if not_text:
+        raise ValueError(
+            f"In {path}, vocabulary.signs contains {not_text}, which are not text. "
+            'Put quotes around sign names such as "yes", "no", "on" or "off".'
+        )
 
 
 def resolve_path(path_from_config: Union[str, Path]) -> Path:

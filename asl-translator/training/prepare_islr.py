@@ -35,14 +35,20 @@ What this script does:
 Run:
     python -m training.prepare_islr
     python -m training.prepare_islr --dataset-dir D:/datasets/asl-signs --max-per-sign 200
+    python -m training.prepare_islr --dataset-zip C:/Users/me/Downloads/asl-signs.zip
+
+    The --dataset-zip option reads the clips straight out of the downloaded
+    zip file, so you never need to unzip the whole (very large) dataset.
 
 Used by: you, once, before training (python -m training.train).
 """
 
 import argparse
+import io
 import sys
+import zipfile
 from pathlib import Path
-from typing import List, Optional
+from typing import BinaryIO, Callable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -55,22 +61,24 @@ SOURCE_NAME = "islr"
 HAND_TYPE_TO_SLOT = {"left_hand": LEFT_HAND_SLOT, "right_hand": RIGHT_HAND_SLOT}
 
 
-def parquet_to_landmark_sequence(parquet_path: Path) -> np.ndarray:
+def parquet_to_landmark_sequence(parquet_source: Union[Path, BinaryIO], clip_name: str = "") -> np.ndarray:
     """
     Read one clip's parquet file and return its hand landmarks.
 
     Args:
-        parquet_path: Path to <sequence_id>.parquet.
+        parquet_source: Path to <sequence_id>.parquet, or an open file
+            (for example a clip read from inside the zip file).
+        clip_name: Name used in error messages.
 
     Returns:
         Array of shape (num_frames, 2, 21, 3); NaN where a hand was not found.
     """
-    clip = pd.read_parquet(parquet_path)
+    clip = pd.read_parquet(parquet_source)
     # Some copies of the dataset call the column "landmark_idx" instead.
     landmark_column = "landmark_index" if "landmark_index" in clip.columns else "landmark_idx"
     required = {"frame", "type", landmark_column, "x", "y", "z"}
     if not required.issubset(clip.columns):
-        raise ValueError(f"{parquet_path} is missing columns {sorted(required - set(clip.columns))}")
+        raise ValueError(f"{clip_name or parquet_source} is missing columns {sorted(required - set(clip.columns))}")
 
     frame_numbers = np.sort(clip["frame"].unique())
     sequence = np.repeat(empty_frame_landmarks()[np.newaxis], len(frame_numbers), axis=0)
@@ -86,7 +94,11 @@ def parquet_to_landmark_sequence(parquet_path: Path) -> np.ndarray:
 
 
 def prepare_islr(
-    dataset_dir: Path, samples_dir: Path, signs: List[str], max_per_sign: Optional[int] = None
+    dataset_dir: Path,
+    samples_dir: Path,
+    signs: List[str],
+    max_per_sign: Optional[int] = None,
+    dataset_zip: Optional[Path] = None,
 ) -> int:
     """
     Convert the selected signs of the Kaggle dataset into the project format.
@@ -96,20 +108,36 @@ def prepare_islr(
         samples_dir: Where SampleStore keeps the converted samples.
         signs: Which sign labels to import.
         max_per_sign: Optional limit per sign (handy for a quick first try).
+        dataset_zip: Optional path to the downloaded asl-signs.zip. When given,
+            files are read directly from the zip and dataset_dir is ignored.
 
     Returns:
         The number of newly converted clips.
     """
-    train_csv = dataset_dir / "train.csv"
-    if not train_csv.exists():
-        raise FileNotFoundError(
-            f"Could not find {train_csv}.\n"
-            "Download the dataset from https://www.kaggle.com/competitions/asl-signs/data "
-            "(after accepting the competition rules), unzip it, and either place it at that "
-            "path or pass --dataset-dir."
-        )
+    # read_clip(path) returns something pd.read_parquet can read, whether the
+    # dataset is an unzipped folder or still inside the zip file.
+    read_clip: Callable[[str], Union[Path, BinaryIO]]
+    if dataset_zip is not None:
+        if not Path(dataset_zip).exists():
+            raise FileNotFoundError(f"Could not find the zip file {dataset_zip}.")
+        archive = zipfile.ZipFile(dataset_zip)
+        if "train.csv" not in archive.namelist():
+            raise FileNotFoundError(f"{dataset_zip} does not contain train.csv - is it the asl-signs dataset?")
+        clips = pd.read_csv(archive.open("train.csv"))
+        # Each clip is small, so reading one into memory at a time is fine.
+        read_clip = lambda clip_path: io.BytesIO(archive.read(clip_path))
+    else:
+        train_csv = dataset_dir / "train.csv"
+        if not train_csv.exists():
+            raise FileNotFoundError(
+                f"Could not find {train_csv}.\n"
+                "Download the dataset from https://www.kaggle.com/competitions/asl-signs/data "
+                "(after accepting the competition rules), then either unzip it to that path, "
+                "pass --dataset-dir, or pass --dataset-zip with the downloaded zip file."
+            )
+        clips = pd.read_csv(train_csv)
+        read_clip = lambda clip_path: dataset_dir / clip_path
 
-    clips = pd.read_csv(train_csv)
     available_signs = set(clips["sign"].unique())
     unknown_signs = [sign for sign in signs if sign not in available_signs]
     if unknown_signs:
@@ -137,8 +165,8 @@ def prepare_islr(
         if sample_id in already_converted:
             continue
         try:
-            sequence = parquet_to_landmark_sequence(dataset_dir / clip.path)
-        except (OSError, ValueError) as error:
+            sequence = parquet_to_landmark_sequence(read_clip(clip.path), clip.path)
+        except (OSError, ValueError, KeyError) as error:
             failures += 1
             print(f"  Skipping {clip.path}: {error}")
             continue
@@ -175,13 +203,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     config = load_config()
     parser = argparse.ArgumentParser(description="Convert the Kaggle asl-signs dataset into project samples.")
     parser.add_argument("--dataset-dir", type=Path, default=resolve_path(config["paths"]["islr_dataset_dir"]))
+    parser.add_argument(
+        "--dataset-zip", type=Path, default=None, help="Read directly from the downloaded asl-signs.zip."
+    )
     parser.add_argument("--max-per-sign", type=int, default=None, help="Limit clips per sign (optional).")
     parser.add_argument(
         "--signs", nargs="+", default=config["vocabulary"]["signs"], help="Signs to import (default: config.yaml)."
     )
     args = parser.parse_args(argv)
     try:
-        prepare_islr(args.dataset_dir, resolve_path(config["paths"]["samples_dir"]), args.signs, args.max_per_sign)
+        prepare_islr(
+            args.dataset_dir,
+            resolve_path(config["paths"]["samples_dir"]),
+            args.signs,
+            args.max_per_sign,
+            args.dataset_zip,
+        )
     except (FileNotFoundError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1

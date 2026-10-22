@@ -114,3 +114,18 @@ def test_islr_parquet_conversion(tmp_path):
     assert index.iloc[0]["signer_id"] == "islr_7"
     with pytest.raises(ValueError):
         prepare_islr(tmp_path / "islr", samples_dir, ["not_a_sign"])
+
+
+def test_islr_conversion_directly_from_zip(tmp_path):
+    import zipfile
+
+    clip_path = tmp_path / "islr" / "train_landmark_files" / "7" / "123.parquet"
+    write_fake_islr_clip(clip_path)
+    train_csv = "path,participant_id,sequence_id,sign\ntrain_landmark_files/7/123.parquet,7,123,hello\n"
+    zip_path = tmp_path / "asl-signs.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("train.csv", train_csv)
+        archive.write(clip_path, "train_landmark_files/7/123.parquet")
+    samples_dir = tmp_path / "samples"
+    assert prepare_islr(tmp_path / "unused", samples_dir, ["hello"], dataset_zip=zip_path) == 1
+    assert SampleStore(samples_dir).load_landmarks("islr/islr_123.npy").shape == (6, 2, 21, 3)

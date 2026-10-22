@@ -70,3 +70,13 @@ def test_formatting_never_changes_the_words():
     translator = FormattingOnlyTranslator()
     assert translator.is_real_translation is False
     assert translator.translate(["hello"]) == "Hello"
+
+
+def test_config_rejects_unquoted_yaml_booleans(tmp_path):
+    from utils.config import load_config
+
+    bad_config = tmp_path / "config.yaml"
+    bad_config.write_text("vocabulary:\n  signs:\n    - hello\n    - yes\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="quotes"):
+        load_config(bad_config)
+    assert "yes" in load_config()["vocabulary"]["signs"]
