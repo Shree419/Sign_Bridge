@@ -69,6 +69,24 @@ vocabulary:
     - hungry
     - sleep
     - where
+    - please
+    - sad
+    - mad
+    - sick
+    - thirsty
+    - home
+    - go
+    - wait
+    - finish
+    - like
+    - have
+    - milk
+    - now
+    - later
+    - who
+    - why
+    - fine
+    - think
   # Optional prettier text to show for a label in the output.
   display_names:
     thankyou: thank you

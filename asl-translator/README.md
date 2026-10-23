@@ -10,7 +10,7 @@ the code comments and in the [Machine learning concepts](#machine-learning-conce
 
 > **What this project is, and what it is not**
 >
-> - It **recognizes isolated signs**: one sign at a time, from a fixed list (12 by default).
+> - It **recognizes isolated signs**: one sign at a time, from a fixed list (30 by default).
 > - It uses **hand landmarks only**. It does not see facial expressions, mouth
 >   shapes, body position or where the hands are relative to the face. These are
 >   all part of ASL.
@@ -83,9 +83,12 @@ The dataset itself is not included in this repository. You download it yourself 
 [data/README.md](data/README.md)). This project's own source code is separate from the
 dataset and is not covered by the dataset's license.
 
-The default vocabulary (`config.yaml → vocabulary.signs`) is 12 signs from that
-dataset: hello, bye, thankyou, yes, no, mom, water, drink, food, hungry, sleep, where.
-You can change the list. The import script will tell you if a sign is not in the dataset.
+The default vocabulary (`config.yaml → vocabulary.signs`) is 30 signs from that
+dataset: hello, bye, thankyou, yes, no, mom, water, drink, food, hungry, sleep, where,
+please, sad, mad, sick, thirsty, home, go, wait, finish, like, have, milk, now, later,
+who, why, fine, think. Signs that differ from one of these only by *where* they are made
+(e.g. dad vs. mom, sleepy vs. sleep) were left out, because a hands-only model cannot
+tell them apart. You can change the list. The import script will tell you if a sign is not in the dataset.
 
 ## 3. Installation
 
