@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Datasets are too large for git. The converted training samples are
+# published as a GitHub Release file instead (see data/README.md).
+data/raw/*
+!data/raw/.gitkeep
+data/samples/
+
+# Trained models (models/checkpoints/) and evaluation reports (reports/)
+# ARE committed: they are small, and committing them means a fresh clone
+# can run the app without training first.
