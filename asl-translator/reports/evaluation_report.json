@@ -1,0 +1,20 @@
+{
+  "checkpoint": "E:\\FTC Code\\Congressional_App_Challenge_Signify\\asl-translator\\models\\checkpoints\\best_model.pt",
+  "num_test_samples": 1713,
+  "num_test_signers": 4,
+  "skipped_test_samples": 418,
+  "accuracy": 0.7151196730881495,
+  "macro_precision": 0.7444389232463559,
+  "macro_recall": 0.7086245382305362,
+  "macro_f1": 0.7096218531290012,
+  "weighted_precision": 0.7497264443279457,
+  "weighted_recall": 0.7151196730881495,
+  "weighted_f1": 0.7149928302378623,
+  "latency": {
+    "mean_ms": 8.377579997759312,
+    "median_ms": 9.355399990454316,
+    "p95_ms": 13.661985003273,
+    "num_timed_samples": 200,
+    "device": "cpu"
+  }
+}

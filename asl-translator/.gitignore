@@ -5,11 +5,12 @@ __pycache__/
 venv/
 .pytest_cache/
 
-# Data and generated files (large and/or personal - do not commit)
+# Datasets are too large for git. The converted training samples are
+# published as a GitHub Release file instead (see data/README.md).
 data/raw/*
 !data/raw/.gitkeep
 data/samples/
-models/checkpoints/*
-!models/checkpoints/.gitkeep
-reports/*
-!reports/.gitkeep
+
+# Trained models (models/checkpoints/) and evaluation reports (reports/)
+# ARE committed: they are small, and committing them means a fresh clone
+# can run the app without training first.

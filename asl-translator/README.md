@@ -111,18 +111,26 @@ model. A GPU is optional.
 
 ## 4. Quick start
 
+**A trained model is included in the repository.** `models/checkpoints/best_model.pt`
+recognizes the 30 default signs. Its test results on 4 signers it never trained on are
+in `reports/` (accuracy 0.715). An earlier 12-sign model (accuracy 0.819) is kept in
+`models/checkpoints/12_signs/`. So after installing, you can go straight to:
+
 ```bash
-# 1. Get data: download the Kaggle dataset (see data/README.md), then convert it
-python -m training.prepare_islr --max-per-sign 150     # drop --max-per-sign to use everything
-
-# 2. Train (also evaluates on the test set and draws graphs into reports/)
-python -m training.train
-
-# 3. Run the app
 streamlit run app.py
 ```
 
+To **retrain** (for example after adding signs or your own recordings), you need
+training data in `data/samples/`. Either download the ready-made samples from the
+repository's GitHub Release, or convert the Kaggle dataset yourself. Both options are
+explained in [data/README.md](data/README.md). Then:
+
+```bash
+python -m training.train      # also evaluates on the test set and draws graphs into reports/
+```
+
 You can re-run the evaluation at any time with `python -m training.evaluate`.
+Training overwrites `models/checkpoints/best_model.pt` and the files in `reports/`.
 
 If the model file is missing, the app still opens and shows hand tracking, and it tells you how
 to train a model. It never invents predictions.

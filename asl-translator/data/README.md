@@ -16,7 +16,25 @@ data/
     └── app_corrections/<id>.npy  ← samples saved from the app's "Correct a mistake" panel
 ```
 
-## Getting the Kaggle "asl-signs" dataset
+## Option A (easiest): download the ready-made training samples
+
+The 11,399 samples used to train the included 30-sign model (already converted
+from the Kaggle dataset into this project's format) are attached to the GitHub
+Release **`training-data-v1`** as `asl-signs-30-samples.zip` (about 65 MB):
+
+<https://github.com/Shree419/Congressional_App_Challenge_Signify/releases/tag/training-data-v1>
+
+Download it and unzip it inside `asl-translator/data/`, so that you get
+`data/samples/index.csv` and `data/samples/islr/...`. Then you can retrain with
+`python -m training.train` or evaluate with `python -m training.evaluate`.
+
+These samples are derived from the Isolated Sign Language Recognition corpus v1.0
+(Deaf Professional Arts Network and Georgia Institute of Technology), licensed
+CC BY 4.0. See "Dataset license and attribution" in the main README.
+
+## Option B: get the Kaggle "asl-signs" dataset and convert it yourself
+
+Use this to import signs other than the 30 defaults.
 
 1. Create a free account on [kaggle.com](https://www.kaggle.com).
 2. Open the competition page,
@@ -38,8 +56,13 @@ data/
    ```bash
    python -m training.prepare_islr
    ```
-   The full download is very large (tens of GB). The converter reads only the
-   clips for the signs you selected. Use `--max-per-sign 100` for a quick first try.
+   The full download is very large (about 40 GB). You don't have to unzip it: the
+   converter can read the clips straight out of the zip file:
+   ```bash
+   python -m training.prepare_islr --dataset-zip path/to/asl-signs.zip
+   ```
+   The converter reads only the clips for the signs you selected. Use
+   `--max-per-sign 100` for a quick first try.
 
 If you cannot download the dataset, you can still build a small model from your
 own recordings (see the main README, "Recording your own training data").
