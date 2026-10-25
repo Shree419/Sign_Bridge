@@ -10,14 +10,22 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -32,7 +40,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -129,45 +139,100 @@ fun TranslatorScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    val shown = liveLabel?.let {
+        when (it) {
+            "del" -> "DEL"
+            "space" -> "SPC"
+            else -> it
+        }
+    } ?: "–"
+    val status = when {
+        !handVisible -> "Show your hand to the camera"
+        liveLabel == null -> "Hold the sign steady"
+        else -> "${(liveConfidence * 100).toInt()}% sure"
+    }
+
+    Box(modifier = modifier.fillMaxSize().background(Brand.Ink)) {
         if (hasPermission) {
             AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
         } else {
             Text(
                 "Camera permission is needed to read signs.",
-                modifier = Modifier.align(Alignment.Center).padding(24.dp)
+                color = Brand.Cream,
+                modifier = Modifier.align(Alignment.Center).padding(24.dp),
             )
         }
 
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(12.dp),
-            shape = MaterialTheme.shapes.large,
-            tonalElevation = 6.dp,
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+            color = Brand.Cream,
+            shadowElevation = 12.dp,
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(horizontal = 22.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                Text(
-                    when {
-                        !handVisible -> "Show your hand to the camera"
-                        liveLabel == null -> "Not sure - hold the sign steady"
-                        else -> "Seeing: $liveLabel (${(liveConfidence * 100).toInt()}%)"
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    if (typed.isEmpty()) "Your text will appear here" else typed,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { onTypedChange("") }) { Text("Clear") }
-                    OutlinedButton(onClick = { onTypedChange(typed.dropLast(1)) }) { Text("Backspace") }
-                    OutlinedButton(onClick = { useFront = !useFront }) { Text("Flip") }
+                errorMessage?.let {
+                    Text(it, color = Brand.Coral, style = MaterialTheme.typography.bodyMedium)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .background(
+                                if (liveLabel != null) Brand.Coral else Brand.Sand,
+                                CircleShape,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            shown,
+                            style = if (shown.length > 1) MaterialTheme.typography.headlineSmall
+                            else MaterialTheme.typography.headlineMedium,
+                            color = if (liveLabel != null) Color.White
+                            else Brand.Ink.copy(alpha = 0.5f),
+                        )
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            status,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Brand.Ink.copy(alpha = 0.65f),
+                        )
+                        Text(
+                            if (typed.isEmpty()) "Your words show up here" else typed,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = if (typed.isEmpty()) Brand.Ink.copy(alpha = 0.35f) else Brand.Ink,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(
+                        onClick = { onTypedChange("") },
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Brand.Teal,
+                            contentColor = Brand.Cream,
+                        ),
+                    ) { Text("Clear") }
+                    OutlinedButton(
+                        onClick = { onTypedChange(typed.dropLast(1)) },
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(1.5.dp, Brand.Teal),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Brand.Teal),
+                    ) { Text("Backspace") }
+                    OutlinedButton(
+                        onClick = { useFront = !useFront },
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(1.5.dp, Brand.Teal),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Brand.Teal),
+                    ) { Text("Flip") }
                 }
             }
         }
