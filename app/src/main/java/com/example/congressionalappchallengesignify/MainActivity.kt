@@ -6,20 +6,22 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import com.example.congressionalappchallengesignify.ui.theme.CongressionalAppChallengeSignifyTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,64 +30,50 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CongressionalAppChallengeSignifyTheme {
-                CongressionalAppChallengeSignifyApp()
+                AppRoot()
             }
         }
     }
 }
 
-@PreviewScreenSizes
-@Composable
-fun CongressionalAppChallengeSignifyApp() {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+enum class Page(val label: String, val icon: ImageVector) {
+    HOME("Home", Icons.Filled.Home),
+    TRANSLATOR("Translator", Icons.Filled.Face),
+    ABOUT("About", Icons.Filled.Info),
+}
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            AppDestinations.entries.forEach {
-                item(
-                    icon = {
-                        Icon(
-                            painterResource(it.icon),
-                            contentDescription = it.label
-                        )
-                    },
-                    label = { Text(it.label) },
-                    selected = it == currentDestination,
-                    onClick = { currentDestination = it }
-                )
+@Composable
+fun AppRoot() {
+    var page by rememberSaveable { mutableStateOf(Page.HOME) }
+    // Kept here so the text survives switching tabs.
+    var typed by rememberSaveable { mutableStateOf("") }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            NavigationBar {
+                Page.entries.forEach { p ->
+                    NavigationBarItem(
+                        selected = p == page,
+                        onClick = { page = p },
+                        icon = { Icon(p.icon, contentDescription = p.label) },
+                        label = { Text(p.label) },
+                    )
+                }
             }
         }
-    ) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
+    ) { innerPadding ->
+        when (page) {
+            Page.HOME -> HomeScreen(
+                onStart = { page = Page.TRANSLATOR },
+                modifier = Modifier.padding(innerPadding),
             )
+            Page.TRANSLATOR -> TranslatorScreen(
+                typed = typed,
+                onTypedChange = { typed = it },
+                modifier = Modifier.padding(innerPadding),
+            )
+            Page.ABOUT -> AboutScreen(modifier = Modifier.padding(innerPadding))
         }
-    }
-}
-
-enum class AppDestinations(
-    val label: String,
-    val icon: Int,
-) {
-    HOME("Home", R.drawable.ic_home),
-    FAVORITES("Favorites", R.drawable.ic_favorite),
-    PROFILE("Profile", R.drawable.ic_account_box),
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CongressionalAppChallengeSignifyTheme {
-        Greeting("Android")
     }
 }
