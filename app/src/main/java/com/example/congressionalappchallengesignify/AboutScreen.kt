@@ -54,9 +54,9 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         ) {
             Section(
                 "Why we made this",
-                "Most people don't know any ASL, so a Deaf or hard-of-hearing person can end up " +
-                        "spelling something out with nobody able to read it. We wanted something simple " +
-                        "that turns those letters into text right away.",
+                "After visiting the Missouri School for the Deaf, we saw how big the communication gap " +
+                        "can be between Deaf students and people who don't know ASL. We built SignBridge to " +
+                        "help bridge it, starting with turning fingerspelled letters into text."
             )
             Divider()
             Section(
